@@ -89,6 +89,7 @@ class MigrationRollbacker
     }
     
     /**
+     * Execute a migration rollback via Artisan.
      *
      * Executes the migration's down() method to actually drop the table,
      * then removes the record from the migrations table.
@@ -115,25 +116,36 @@ class MigrationRollbacker
 
             // If migration file exists, instantiate and run its down method
             if ($migrationPath) {
+                // Get classes before requiring the migration file
+                $classesBefore = get_declared_classes();
+                
                 // Include the file to define the migration class
                 require_once $migrationPath;
-
-                // Get the migration instance - handle both anonymous and named classes
-                $migration = $this->getMigrationInstance($migrationPath);
-
-                if ($migration === null) {
-                    Log::error("Could not instantiate migration for {$migrationName}");
-                    // Still delete from migrations table
-                    $this->resolver->connection()
-                        ->table($this->migrationsTable)
-                        ->where('migration', $migrationName)
-                        ->delete();
-
-                    return false;
+                
+                // Get classes after requiring
+                $classesAfter = get_declared_classes();
+                
+                // Find the new class that was loaded (the migration class)
+                $newClasses = array_diff($classesAfter, $classesBefore);
+                
+                // Filter to find a class that is a Migration subclass
+                $migrationClass = null;
+                foreach ($newClasses as $cls) {
+                    if (class_exists($cls) && is_subclass_of($cls, \Illuminate\Database\Migrations\Migration::class)) {
+                        $migrationClass = $cls;
+                        break;
+                    }
                 }
-
-                // Call down() - Schema facade will use the default connection
-                $migration->down();
+                
+                if ($migrationClass && class_exists($migrationClass)) {
+                    $instance = new $migrationClass();
+                    
+                    // Verify it's actually a Migration instance
+                    if ($instance instanceof \Illuminate\Database\Migrations\Migration) {
+                        // Call down() - Schema facade will use the default connection
+                        $instance->down();
+                    }
+                }
             }
 
             // Delete from migrations table
@@ -147,44 +159,6 @@ class MigrationRollbacker
             Log::error("Migration rollback failed for {$migrationName}: ".$e->getMessage());
 
             return false;
-        }
-    }
-
-    /**
-     * Get a migration instance from the migration file.
-     *
-     * Handles both anonymous classes (Modern Laravel) and named classes.
-     */
-    private function getMigrationInstance(string $migrationPath): ?\Illuminate\Database\Migrations\Migration
-    {
-        try {
-            // Get all declared classes before and after require
-            $classesBefore = get_declared_classes();
-            require_once $migrationPath;
-            $classesAfter = get_declared_classes();
-
-            // Find the new class that was loaded
-            $newClasses = array_diff($classesAfter, $classesBefore);
-
-            if (empty($newClasses)) {
-                return null;
-            }
-
-            // Get the last defined class (should be the Migration)
-            $migrationClass = end($newClasses);
-
-            if (class_exists($migrationClass)) {
-                $instance = new $migrationClass;
-                if ($instance instanceof \Illuminate\Database\Migrations\Migration) {
-                    return $instance;
-                }
-            }
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Failed to get migration instance: '.$e->getMessage());
-
-            return null;
         }
     }
 

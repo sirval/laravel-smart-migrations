@@ -13,14 +13,13 @@ class MigrationRollbacker
     public function __construct(
         private ConnectionResolverInterface $resolver,
         private string $migrationsTable = 'migrations'
-    ) {
-    }
+    ) {}
 
     /**
      * Rollback a single migration.
      *
      * @param  object  $migration  The migration record
-     * @return bool  Success status
+     * @return bool Success status
      *
      * @throws \Exception
      */
@@ -33,7 +32,7 @@ class MigrationRollbacker
      * Rollback multiple migrations.
      *
      * @param  Collection<int, object>  $migrations  Migrations to rollback
-     * @return Collection  Results with success/failure status
+     * @return Collection Results with success/failure status
      */
     public function rollbackMultiple(Collection $migrations): Collection
     {
@@ -47,7 +46,7 @@ class MigrationRollbacker
      * Rollback all migrations in a collection.
      *
      * @param  Collection<int, object>  $migrations
-     * @return Collection  Results
+     * @return Collection Results
      */
     public function rollbackAll(Collection $migrations): Collection
     {
@@ -58,7 +57,7 @@ class MigrationRollbacker
      * Get the unique batches from a collection of migrations.
      *
      * @param  Collection<int, object>  $migrations
-     * @return array  Array of batch numbers
+     * @return array Array of batch numbers
      */
     public function getExecutedBatches(Collection $migrations): array
     {
@@ -73,8 +72,6 @@ class MigrationRollbacker
      * - Broken migration dependencies
      *
      * @param  Collection<int, object>  $migrations
-     * @param  bool  $allowMultipleBatches
-     * @return bool
      */
     public function validateBeforeRollback(Collection $migrations, bool $allowMultipleBatches = false): bool
     {
@@ -90,9 +87,8 @@ class MigrationRollbacker
 
         return true;
     }
-
+    
     /**
-     * Execute a migration rollback via Artisan.
      *
      * Executes the migration's down() method to actually drop the table,
      * then removes the record from the migrations table.
@@ -197,13 +193,6 @@ class MigrationRollbacker
 
     /**
      * Log a rollback to the audit table (if enabled).
-     *
-     * @param  string  $migrationName
-     * @param  string  $table
-     * @param  int  $batch
-     * @param  string  $status
-     * @param  string|null  $details
-     * @return void
      */
     public function logToAudit(
         string $migrationName,

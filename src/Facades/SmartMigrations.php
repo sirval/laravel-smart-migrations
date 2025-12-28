@@ -3,7 +3,6 @@
 namespace Sirval\LaravelSmartMigrations\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Sirval\LaravelSmartMigrations\Services\SmartMigrations as SmartMigrationsService;
 
 /**
  * @see \Sirval\LaravelSmartMigrations\LaravelSmartMigrations
@@ -23,4 +22,3 @@ class SmartMigrations extends Facade
         return \Sirval\LaravelSmartMigrations\LaravelSmartMigrations::class;
     }
 }
-

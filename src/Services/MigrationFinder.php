@@ -10,8 +10,7 @@ class MigrationFinder
     public function __construct(
         private ConnectionResolverInterface $resolver,
         private string $table = 'migrations'
-    ) {
-    }
+    ) {}
 
     /**
      * Find all migrations for a specific table.
@@ -41,7 +40,6 @@ class MigrationFinder
      * Find a specific migration by its timestamp.
      *
      * @param  string  $timestamp  The migration timestamp
-     * @return object|null
      */
     public function findByTimestamp(string $timestamp): ?object
     {
@@ -53,7 +51,6 @@ class MigrationFinder
      * Get the latest migration for a specific table.
      *
      * @param  string  $tableName  The database table name
-     * @return object|null
      */
     public function getLatestForTable(string $tableName): ?object
     {
@@ -64,7 +61,6 @@ class MigrationFinder
      * Get the oldest migration for a specific table.
      *
      * @param  string  $tableName  The database table name
-     * @return object|null
      */
     public function getOldestForTable(string $tableName): ?object
     {
@@ -92,7 +88,6 @@ class MigrationFinder
      * Check if a migration exists in the database.
      *
      * @param  string  $migrationName  The migration name
-     * @return bool
      */
     public function exists(string $migrationName): bool
     {
@@ -104,8 +99,6 @@ class MigrationFinder
 
     /**
      * Get the total number of batches executed.
-     *
-     * @return int
      */
     public function getMaxBatch(): int
     {
@@ -124,7 +117,6 @@ class MigrationFinder
      *   - 2024_01_01_000001_create_posts → posts
      *
      * @param  string  $migration  The migration filename
-     * @return string|null
      */
     private function extractTableFromMigration(string $migration): ?string
     {

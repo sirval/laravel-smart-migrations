@@ -191,6 +191,73 @@ php artisan migrate:list-model-migrations User
 | `--preview` | — | Preview changes without executing rollback | `false` |
 | `--check-fk` | — | Check and display foreign key constraints | `false` |
 
+### Advanced Features
+
+#### Preview Mode (`--preview`)
+
+Preview what migrations will be rolled back without making any database changes. This is useful for testing and validation before executing the actual rollback.
+
+```bash
+# Preview rollback for a table
+php artisan migrate:rollback-table users --preview
+
+# Preview with other options
+php artisan migrate:rollback-table users --latest --preview
+
+# Preview multiple tables
+php artisan migrate:rollback-table users,posts --preview
+```
+
+When you run with `--preview`, the command will:
+- Show all migrations that would be rolled back
+- Display any foreign key constraints (if `--check-fk` is used)
+- Return successfully without making any changes to the database
+
+#### Foreign Key Detection (`--check-fk`)
+
+Automatically detect and display all foreign key constraints before rolling back migrations. This helps prevent breaking references between tables.
+
+```bash
+# Check foreign keys for a table
+php artisan migrate:rollback-table users --check-fk
+
+# Combine with preview for full safety
+php artisan migrate:rollback-table users --check-fk --preview
+
+# Check multiple tables
+php artisan migrate:rollback-table users,posts,comments --check-fk
+```
+
+The foreign key check displays:
+- **Foreign Keys Defined in the Table**: Keys that reference other tables
+- **Dependent Foreign Keys**: Other tables that reference this table
+
+Supported Databases:
+- **MySQL**: Uses `INFORMATION_SCHEMA` queries
+- **PostgreSQL**: Uses `information_schema` views
+- **SQLite**: Uses `PRAGMA foreign_key_list()`
+
+#### Combined Usage
+
+For maximum safety, combine preview mode with foreign key detection:
+
+```bash
+# Most cautious approach
+php artisan migrate:rollback-table users --preview --check-fk
+
+# Works with all other options
+php artisan migrate:rollback-table users --latest --preview --check-fk --force
+
+# Multiple tables with full checks
+php artisan migrate:rollback-table users,posts,comments --all --preview --check-fk
+```
+
+This allows you to:
+1. See all migrations that will be rolled back
+2. Identify any foreign key constraints
+3. Verify safety without making changes
+4. Execute with confidence when ready
+
 ### Configuration
 
 The package respects these configuration options from `config/smart-migrations.php`:

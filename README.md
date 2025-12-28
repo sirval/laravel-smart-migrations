@@ -88,6 +88,15 @@ php artisan migrate:rollback-table users -F
 php artisan migrate:rollback-table users --interactive
 php artisan migrate:rollback-table users -I
 
+# Preview the changes without executing
+php artisan migrate:rollback-table users --preview
+
+# Check for foreign key constraints
+php artisan migrate:rollback-table users --check-fk
+
+# Combine options: preview with foreign key check
+php artisan migrate:rollback-table users --preview --check-fk
+
 # Rollback multiple tables at once
 php artisan migrate:rollback-table users,posts,comments --latest
 php artisan migrate:rollback-table users,posts,comments -L
@@ -123,6 +132,15 @@ php artisan migrate:rollback-model User -F
 # Interactive mode
 php artisan migrate:rollback-model User --interactive
 php artisan migrate:rollback-model User -I
+
+# Preview the changes without executing
+php artisan migrate:rollback-model User --preview
+
+# Check for foreign key constraints
+php artisan migrate:rollback-model User --check-fk
+
+# Combine options: preview with foreign key check
+php artisan migrate:rollback-model User --preview --check-fk
 
 # Rollback multiple models at once
 php artisan migrate:rollback-model User,Post,Comment --latest
@@ -170,6 +188,8 @@ php artisan migrate:list-model-migrations User
 | `--batch=N` | `-B` | Only rollback migrations from batch N | `null` |
 | `--force` | `-F` | Skip confirmation prompts | `false` |
 | `--interactive` | `-I` | Show options and let user choose | `false` |
+| `--preview` | — | Preview changes without executing rollback | `false` |
+| `--check-fk` | — | Check and display foreign key constraints | `false` |
 
 ### Configuration
 

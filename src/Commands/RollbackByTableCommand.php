@@ -5,6 +5,7 @@ namespace Sirval\LaravelSmartMigrations\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Sirval\LaravelSmartMigrations\Exceptions\NoMigrationsFoundException;
+use Sirval\LaravelSmartMigrations\Services\ForeignKeyDetector;
 use Sirval\LaravelSmartMigrations\Services\MigrationFinder;
 use Sirval\LaravelSmartMigrations\Services\MigrationParser;
 use Sirval\LaravelSmartMigrations\Services\MigrationRollbacker;
@@ -22,7 +23,9 @@ class RollbackByTableCommand extends Command
                             {--B|batch= : Only rollback migrations from a specific batch}
                             {--A|all : Rollback all migrations without batch checks}
                             {--F|force : Skip confirmation prompts}
-                            {--I|interactive : Show options and let user choose}';
+                            {--I|interactive : Show options and let user choose}
+                            {--preview : Preview the changes without executing them}
+                            {--check-fk : Check for foreign key constraints before rollback}';
 
     /**
      * The console command description.
@@ -38,6 +41,7 @@ class RollbackByTableCommand extends Command
         public MigrationFinder $finder,
         public MigrationParser $parser,
         public MigrationRollbacker $rollbacker,
+        public ForeignKeyDetector $foreignKeyDetector,
     ) {
         parent::__construct();
     }
@@ -116,6 +120,17 @@ class RollbackByTableCommand extends Command
             }
 
             $this->outputRollbackPlan($allMigrations);
+
+            // Check for foreign keys if requested
+            if ($this->option('check-fk')) {
+                $this->checkForeignKeys($tables);
+            }
+
+            // Handle preview mode
+            if ($this->option('preview')) {
+                $this->info('Preview mode enabled - no changes will be made.');
+                return self::SUCCESS;
+            }
 
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
@@ -259,5 +274,48 @@ class RollbackByTableCommand extends Command
                 $m->batch,
             ])->toArray()
         );
+    }
+
+    /**
+     * Check and display foreign key constraints.
+     */
+    private function checkForeignKeys(array $tables): void
+    {
+        $this->line('');
+        $this->info('Checking foreign key constraints...');
+        $this->line('');
+
+        $hasConstraints = false;
+
+        foreach ($tables as $table) {
+            // Check for foreign keys defined in this table
+            $foreignKeys = $this->foreignKeyDetector->detectForeignKeys($table);
+            if ($foreignKeys->isNotEmpty()) {
+                $hasConstraints = true;
+                $this->warn("⚠ Table '{$table}' has the following foreign keys:");
+                $this->table(
+                    ['Constraint Name', 'Column', 'References', 'Ref Column'],
+                    $this->foreignKeyDetector->formatForeignKeysForDisplay($foreignKeys)
+                );
+                $this->line('');
+            }
+
+            // Check for tables that reference this table
+            $dependentKeys = $this->foreignKeyDetector->detectDependentKeys($table);
+            if ($dependentKeys->isNotEmpty()) {
+                $hasConstraints = true;
+                $this->warn("⚠ Other tables have foreign keys referencing '{$table}':");
+                $this->table(
+                    ['Dependent Table', 'Column', 'Constraint Name'],
+                    $this->foreignKeyDetector->formatDependentKeysForDisplay($dependentKeys)
+                );
+                $this->line('');
+            }
+        }
+
+        if (!$hasConstraints) {
+            $this->info('✓ No foreign key constraints detected.');
+            $this->line('');
+        }
     }
 }

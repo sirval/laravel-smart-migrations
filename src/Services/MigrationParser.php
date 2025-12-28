@@ -13,7 +13,7 @@ class MigrationParser
      * and extracts the table name from them.
      *
      * @param  string  $filePath  Full path to the migration file
-     * @return string|null  The table name or null if not found
+     * @return string|null The table name or null if not found
      */
     public function parseTableFromMigrationFile(string $filePath): ?string
     {
@@ -47,7 +47,7 @@ class MigrationParser
      *   - AddTimestampsToPostsTable → posts
      *
      * @param  string  $className  The migration class name
-     * @return string|null  The estimated table name
+     * @return string|null The estimated table name
      */
     public function parseTableFromClassName(string $className): ?string
     {
@@ -84,7 +84,7 @@ class MigrationParser
      *   - 2024_01_01_000001_create_user_profiles → user_profiles
      *
      * @param  string  $migrationName  The migration filename
-     * @return string|null  The estimated table name
+     * @return string|null The estimated table name
      */
     public function parseTableFromMigrationName(string $migrationName): ?string
     {
@@ -116,7 +116,7 @@ class MigrationParser
      *   - Modules\Blog\Models\Post → Post
      *
      * @param  string  $namespace  The full namespace
-     * @return string|null  The model class name
+     * @return string|null The model class name
      */
     public function extractModelFromNamespace(string $namespace): ?string
     {
@@ -125,9 +125,6 @@ class MigrationParser
 
     /**
      * Convert a camelCase string to snake_case.
-     *
-     * @param  string  $string
-     * @return string
      */
     private function camelToSnake(string $string): string
     {

@@ -51,6 +51,7 @@ class RollbackByBatchCommand extends Command
 
             if ($migrations->isEmpty()) {
                 $this->warn("No migrations found in batch {$batch}.");
+
                 return self::SUCCESS;
             }
 
@@ -59,12 +60,14 @@ class RollbackByBatchCommand extends Command
             // If only showing, return here
             if ($this->option('show')) {
                 $this->info('Use without --show flag to rollback these migrations.');
+
                 return self::SUCCESS;
             }
 
             // Validate before rollback
             if (! $this->rollbacker->validateBeforeRollback($migrations)) {
                 $this->error('Validation failed: Cannot safely rollback these migrations.');
+
                 return self::FAILURE;
             }
 
@@ -73,6 +76,7 @@ class RollbackByBatchCommand extends Command
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
                 $this->info('Rollback cancelled.');
+
                 return self::SUCCESS;
             }
 
@@ -88,9 +92,11 @@ class RollbackByBatchCommand extends Command
             return self::SUCCESS;
         } catch (NoMigrationsFoundException $e) {
             $this->error($e->getMessage());
+
             return self::FAILURE;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

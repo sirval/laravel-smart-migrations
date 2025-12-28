@@ -14,9 +14,7 @@ use Sirval\LaravelSmartMigrations\Services\SmartMigrations;
  */
 class LaravelSmartMigrations
 {
-    public function __construct(private SmartMigrations $smartMigrations)
-    {
-    }
+    public function __construct(private SmartMigrations $smartMigrations) {}
 
     /**
      * Get the SmartMigrations service instance.

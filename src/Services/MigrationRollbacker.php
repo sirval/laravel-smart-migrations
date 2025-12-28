@@ -3,8 +3,9 @@
 namespace Sirval\LaravelSmartMigrations\Services;
 
 use Illuminate\Database\ConnectionResolverInterface;
+use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class MigrationRollbacker
 {
@@ -87,13 +88,51 @@ class MigrationRollbacker
     }
 
     /**
-     * Execute a migration rollback via Artisan.
+     * Executes the migration's down() method to actually drop the table,
+     * then removes the record from the migrations table.
      */
     private function rollbackMigration(string $migrationName): bool
     {
         try {
-            // Get the migration resolver
+            /** @var Migrator $migrator */
             $migrator = app('migrator');
+            $migrationsPath = database_path('migrations');
+
+            // Get all migration files
+            $files = $migrator->getMigrationFiles([$migrationsPath]);
+
+            $migrationPath = null;
+
+            // Find the migration file matching the migration name
+            foreach ($files as $file) {
+                if (basename($file, '.php') === $migrationName) {
+                    $migrationPath = $file;
+                    break;
+                }
+            }
+
+            // If migration file exists, instantiate and run its down method
+            if ($migrationPath) {
+                // Include the file to define the migration class
+                require_once $migrationPath;
+
+                // Get the migration instance - handle both anonymous and named classes
+                $migration = $this->getMigrationInstance($migrationPath);
+
+                if ($migration === null) {
+                    Log::error("Could not instantiate migration for {$migrationName}");
+                    // Still delete from migrations table
+                    $this->resolver->connection()
+                        ->table($this->migrationsTable)
+                        ->where('migration', $migrationName)
+                        ->delete();
+
+                    return false;
+                }
+
+                // Call down() - Schema facade will use the default connection
+                $migration->down();
+            }
 
             // Delete from migrations table
             $this->resolver->connection()
@@ -102,8 +141,48 @@ class MigrationRollbacker
                 ->delete();
 
             return true;
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+            Log::error("Migration rollback failed for {$migrationName}: ".$e->getMessage());
+
             return false;
+        }
+    }
+
+    /**
+     * Get a migration instance from the migration file.
+     *
+     * Handles both anonymous classes (Modern Laravel) and named classes.
+     */
+    private function getMigrationInstance(string $migrationPath): ?\Illuminate\Database\Migrations\Migration
+    {
+        try {
+            // Get all declared classes before and after require
+            $classesBefore = get_declared_classes();
+            require_once $migrationPath;
+            $classesAfter = get_declared_classes();
+
+            // Find the new class that was loaded
+            $newClasses = array_diff($classesAfter, $classesBefore);
+
+            if (empty($newClasses)) {
+                return null;
+            }
+
+            // Get the last defined class (should be the Migration)
+            $migrationClass = end($newClasses);
+
+            if (class_exists($migrationClass)) {
+                $instance = new $migrationClass;
+                if ($instance instanceof \Illuminate\Database\Migrations\Migration) {
+                    return $instance;
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Failed to get migration instance: '.$e->getMessage());
+
+            return null;
         }
     }
 

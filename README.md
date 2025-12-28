@@ -68,22 +68,33 @@ Roll back all migrations for a specific table:
 ```bash
 # Rollback latest migration only
 php artisan migrate:rollback-table users --latest
+php artisan migrate:rollback-table users -L
 
 # Rollback oldest migration only
 php artisan migrate:rollback-table users --oldest
+php artisan migrate:rollback-table users -O
 
 # Rollback all migrations for this table
 php artisan migrate:rollback-table users --all
+php artisan migrate:rollback-table users -A
 
 # Rollback migrations from specific batch
 php artisan migrate:rollback-table users --batch=5
+php artisan migrate:rollback-table users -B 5
 
 # Skip confirmation prompt
 php artisan migrate:rollback-table users --force
+php artisan migrate:rollback-table users -F
+
+# Interactive mode (choose from available options)
+php artisan migrate:rollback-table users --interactive
+php artisan migrate:rollback-table users -I
 
 # Rollback multiple tables at once
 php artisan migrate:rollback-table users,posts,comments --latest
-php artisan migrate:rollback-table users posts comments --latest
+php artisan migrate:rollback-table users,posts,comments -L
+php artisan migrate:rollback-table users posts comments --oldest
+php artisan migrate:rollback-table users posts comments -O
 ```
 
 #### 2. Rollback by Model Name
@@ -93,22 +104,33 @@ Roll back all migrations associated with a specific model:
 ```bash
 # Rollback latest migration
 php artisan migrate:rollback-model User --latest
+php artisan migrate:rollback-model User -L
 
 # Rollback oldest migration
 php artisan migrate:rollback-model User --oldest
+php artisan migrate:rollback-model User -O
 
 # Rollback all migrations
 php artisan migrate:rollback-model User --all
+php artisan migrate:rollback-model User -A
 
 # Rollback by batch
 php artisan migrate:rollback-model User --batch=5
+php artisan migrate:rollback-model User -B 5
 
 # Skip confirmation
 php artisan migrate:rollback-model User --force
+php artisan migrate:rollback-model User -F
+
+# Interactive mode
+php artisan migrate:rollback-model User --interactive
+php artisan migrate:rollback-model User -I
 
 # Rollback multiple models at once
 php artisan migrate:rollback-model User,Post,Comment --latest
-php artisan migrate:rollback-model User Post Comment --latest
+php artisan migrate:rollback-model User,Post,Comment -L
+php artisan migrate:rollback-model User Post Comment --oldest
+php artisan migrate:rollback-model User Post Comment -O
 ```
 
 #### 3. Rollback by Batch Number
@@ -121,6 +143,7 @@ php artisan migrate:rollback-batch 5
 
 # Skip confirmation
 php artisan migrate:rollback-batch 5 --force
+php artisan migrate:rollback-batch 5 -F
 ```
 
 #### 4. List Migrations for Table

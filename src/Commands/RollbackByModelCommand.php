@@ -17,11 +17,11 @@ class RollbackByModelCommand extends Command
      * @var string
      */
     protected $signature = 'migrate:rollback-model {models* : The model name(s) to rollback (comma or space separated)}
-                            {--latest : Only rollback the latest migration for this model}
-                            {--oldest : Only rollback the oldest migration for this model}
-                            {--batch= : Only rollback migrations from a specific batch}
-                            {--all : Rollback all migrations without batch checks}
-                            {--force : Skip confirmation prompts}';
+                            {--L|latest : Only rollback the latest migration for this model}
+                            {--O|oldest : Only rollback the oldest migration for this model}
+                            {--B|batch= : Only rollback migrations from a specific batch}
+                            {--A|all : Rollback all migrations without batch checks}
+                            {--F|force : Skip confirmation prompts}';
 
     /**
      * The console command description.

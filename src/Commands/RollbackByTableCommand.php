@@ -17,12 +17,12 @@ class RollbackByTableCommand extends Command
      * @var string
      */
     protected $signature = 'migrate:rollback-table {tables* : The table name(s) to rollback (comma or space separated)}
-                            {--latest : Only rollback the latest migration for this table}
-                            {--oldest : Only rollback the oldest migration for this table}
-                            {--batch= : Only rollback migrations from a specific batch}
-                            {--all : Rollback all migrations without batch checks}
-                            {--force : Skip confirmation prompts}
-                            {--interactive : Show options and let user choose}';
+                            {--L|latest : Only rollback the latest migration for this table}
+                            {--O|oldest : Only rollback the oldest migration for this table}
+                            {--B|batch= : Only rollback migrations from a specific batch}
+                            {--A|all : Rollback all migrations without batch checks}
+                            {--F|force : Skip confirmation prompts}
+                            {--I|interactive : Show options and let user choose}';
 
     /**
      * The console command description.

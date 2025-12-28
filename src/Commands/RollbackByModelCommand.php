@@ -5,7 +5,6 @@ namespace Sirval\LaravelSmartMigrations\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Sirval\LaravelSmartMigrations\Exceptions\ModelNotFoundException;
-use Sirval\LaravelSmartMigrations\Exceptions\NoMigrationsFoundException;
 use Sirval\LaravelSmartMigrations\Services\MigrationFinder;
 use Sirval\LaravelSmartMigrations\Services\MigrationRollbacker;
 use Sirval\LaravelSmartMigrations\Services\ModelResolver;
@@ -49,12 +48,13 @@ class RollbackByModelCommand extends Command
     {
         try {
             $modelInput = $this->argument('models');
-            
+
             // Parse input: could be "User,Post,Comment" or "User Post Comment"
             $models = $this->parseModelInput($modelInput);
-            
+
             if (empty($models)) {
                 $this->error('No models provided.');
+
                 return self::FAILURE;
             }
 
@@ -90,11 +90,12 @@ class RollbackByModelCommand extends Command
 
             // Report models with no migrations
             if (! empty($notFoundModels)) {
-                $this->warn("No migrations found for: " . implode(', ', $notFoundModels));
+                $this->warn('No migrations found for: '.implode(', ', $notFoundModels));
             }
 
             if ($allMigrations->isEmpty()) {
                 $this->error('No migrations found for any of the specified models.');
+
                 return self::FAILURE;
             }
 
@@ -112,12 +113,14 @@ class RollbackByModelCommand extends Command
 
             if ($allMigrations->isEmpty()) {
                 $this->warn('No migrations matched the specified criteria.');
+
                 return self::SUCCESS;
             }
 
             // Validate before rollback
             if (! $this->rollbacker->validateBeforeRollback($allMigrations, $this->option('all'))) {
                 $this->error('Validation failed: Cannot safely rollback these migrations.');
+
                 return self::FAILURE;
             }
 
@@ -126,6 +129,7 @@ class RollbackByModelCommand extends Command
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
                 $this->info('Rollback cancelled.');
+
                 return self::SUCCESS;
             }
 
@@ -141,15 +145,13 @@ class RollbackByModelCommand extends Command
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }
 
     /**
      * Parse model input (comma or space separated).
-     *
-     * @param  array  $input
-     * @return array
      */
     private function parseModelInput(array $input): array
     {
@@ -202,7 +204,7 @@ class RollbackByModelCommand extends Command
         if ($modelLabel) {
             $this->info($modelLabel);
         }
-        
+
         $this->table(
             ['Batch', 'Migration', 'Status'],
             $migrations->map(fn ($m) => [

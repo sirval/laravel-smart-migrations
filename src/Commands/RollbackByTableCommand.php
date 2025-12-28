@@ -129,6 +129,7 @@ class RollbackByTableCommand extends Command
             // Handle preview mode
             if ($this->option('preview')) {
                 $this->info('Preview mode enabled - no changes will be made.');
+
                 return self::SUCCESS;
             }
 
@@ -313,7 +314,7 @@ class RollbackByTableCommand extends Command
             }
         }
 
-        if (!$hasConstraints) {
+        if (! $hasConstraints) {
             $this->info('✓ No foreign key constraints detected.');
             $this->line('');
         }

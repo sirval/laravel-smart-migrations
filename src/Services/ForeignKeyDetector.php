@@ -2,8 +2,8 @@
 
 namespace Sirval\LaravelSmartMigrations\Services;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ForeignKeyDetector
 {
@@ -37,7 +37,7 @@ class ForeignKeyDetector
     {
         $database = DB::connection()->getDatabaseName();
 
-        $results = DB::select("
+        $results = DB::select('
             SELECT
                 CONSTRAINT_NAME as constraint_name,
                 COLUMN_NAME as column_name,
@@ -45,7 +45,7 @@ class ForeignKeyDetector
                 REFERENCED_COLUMN_NAME as referenced_column
             FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL
-        ", [$database, $tableName]);
+        ', [$database, $tableName]);
 
         return array_map(fn ($row) => (array) $row, $results);
     }
@@ -55,7 +55,7 @@ class ForeignKeyDetector
      */
     private function getPostgresForeignKeys(string $tableName): array
     {
-        $results = DB::select("
+        $results = DB::select('
             SELECT
                 constraint_name,
                 column_name,
@@ -63,7 +63,7 @@ class ForeignKeyDetector
                 referenced_column_name as referenced_column
             FROM information_schema.key_column_usage
             WHERE table_name = ? AND referenced_table_name IS NOT NULL
-        ", [$tableName]);
+        ', [$tableName]);
 
         return array_map(fn ($row) => (array) $row, $results);
     }
@@ -74,15 +74,16 @@ class ForeignKeyDetector
     private function getSqliteForeignKeys(string $tableName): array
     {
         $results = DB::select("PRAGMA foreign_key_list({$tableName})");
-        
+
         if (empty($results)) {
             return [];
         }
 
         return array_map(function ($row) {
             $row = (array) $row;
+
             return [
-                'constraint_name' => 'fk_' . $row['table'] . '_' . $row['from'],
+                'constraint_name' => 'fk_'.$row['table'].'_'.$row['from'],
                 'column_name' => $row['from'],
                 'referenced_table' => $row['table'],
                 'referenced_column' => $row['to'],
@@ -120,14 +121,14 @@ class ForeignKeyDetector
     {
         $database = DB::connection()->getDatabaseName();
 
-        $results = DB::select("
+        $results = DB::select('
             SELECT
                 TABLE_NAME as dependent_table,
                 COLUMN_NAME as column_name,
                 CONSTRAINT_NAME as constraint_name
             FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
             WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME = ?
-        ", [$database, $tableName]);
+        ', [$database, $tableName]);
 
         return array_map(fn ($row) => (array) $row, $results);
     }
@@ -137,14 +138,14 @@ class ForeignKeyDetector
      */
     private function getPostgresDependentKeys(string $tableName): array
     {
-        $results = DB::select("
+        $results = DB::select('
             SELECT
                 table_name as dependent_table,
                 column_name,
                 constraint_name
             FROM information_schema.key_column_usage
             WHERE referenced_table_name = ?
-        ", [$tableName]);
+        ', [$tableName]);
 
         return array_map(fn ($row) => (array) $row, $results);
     }

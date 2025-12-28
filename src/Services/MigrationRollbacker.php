@@ -87,9 +87,8 @@ class MigrationRollbacker
 
         return true;
     }
-
+    
     /**
-     * Execute a migration rollback via Artisan.
      *
      * Executes the migration's down() method to actually drop the table,
      * then removes the record from the migrations table.

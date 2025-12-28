@@ -1,12 +1,18 @@
 {
     "name": "sirval/laravel-smart-migrations",
-    "description": "Intelligently manage Laravel migrations with safe rollback, analysis, validation, and comprehensive tools for table and model-based operations",
+    "description": "Intelligently manage Laravel migrations with safe rollback by table or model, foreign key detection, preview mode, and comprehensive migration analysis tools",
     "keywords": [
-        "sirval",
         "laravel",
         "migrations",
         "rollback",
-        "migration-management"
+        "migration-management",
+        "database",
+        "foreign-keys",
+        "table-rollback",
+        "model-rollback",
+        "batch-rollback",
+        "preview-mode",
+        "migration-tools"
     ],
     "homepage": "https://github.com/sirval/laravel-smart-migrations",
     "license": "MIT",
@@ -14,22 +20,27 @@
         {
             "name": "Ohuka Ikenna",
             "email": "ohukaiv@gmail.com",
-            "role": "Developer"
+            "role": "Developer",
+            "homepage": "https://github.com/sirval"
         }
     ],
+    "support": {
+        "issues": "https://github.com/sirval/laravel-smart-migrations/issues",
+        "source": "https://github.com/sirval/laravel-smart-migrations"
+    },
     "require": {
         "php": "^8.1",
         "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^11.0||^12.0"
+        "illuminate/contracts": "^10.0||^11.0||^12.0"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
         "larastan/larastan": "^3.0",
         "orchestra/testbench": "^10.0.0||^9.0.0",
-    "pestphp/pest": "^3.0",
-    "pestphp/pest-plugin-arch": "^3.0",
-    "pestphp/pest-plugin-laravel": "^3.0",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-arch": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
@@ -73,5 +84,6 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "readme": "README.md"
 }

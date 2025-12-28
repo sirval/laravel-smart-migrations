@@ -9,13 +9,11 @@ Intelligently manage Laravel migrations with safe rollback, analysis, validation
 
 A comprehensive Laravel package for intelligent migration management. Roll back migrations by table name or model, with explicit, safe options to prevent accidental data loss. Future versions will include analysis, validation, and optimization tools.
 
-## Support us
+## ⭐ Give us a Star
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-smart-migrations.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-smart-migrations)
+If you find this package helpful, please consider giving us a star on GitHub! It helps us continue maintaining and improving this package. Your support means a lot to us! ☕
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+[⭐ Star us on GitHub](https://github.com/sirval/laravel-smart-migrations)
 
 ## Installation
 

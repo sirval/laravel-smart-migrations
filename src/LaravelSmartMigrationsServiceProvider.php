@@ -2,8 +2,6 @@
 
 namespace Sirval\LaravelSmartMigrations;
 
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Sirval\LaravelSmartMigrations\Commands\ListModelMigrationsCommand;
 use Sirval\LaravelSmartMigrations\Commands\ListTableMigrationsCommand;
 use Sirval\LaravelSmartMigrations\Commands\RollbackByBatchCommand;
@@ -14,6 +12,8 @@ use Sirval\LaravelSmartMigrations\Services\MigrationParser;
 use Sirval\LaravelSmartMigrations\Services\MigrationRollbacker;
 use Sirval\LaravelSmartMigrations\Services\ModelResolver;
 use Sirval\LaravelSmartMigrations\Services\SmartMigrations;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class LaravelSmartMigrationsServiceProvider extends PackageServiceProvider
 {
@@ -46,7 +46,7 @@ class LaravelSmartMigrationsServiceProvider extends PackageServiceProvider
         });
 
         $this->app->singleton(MigrationParser::class, function () {
-            return new MigrationParser();
+            return new MigrationParser;
         });
 
         $this->app->singleton(ModelResolver::class, function () {
@@ -80,5 +80,3 @@ class LaravelSmartMigrationsServiceProvider extends PackageServiceProvider
         });
     }
 }
-
-

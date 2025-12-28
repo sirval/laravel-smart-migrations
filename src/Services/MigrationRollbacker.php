@@ -93,9 +93,6 @@ class MigrationRollbacker
      *
      * Executes the migration's down() method to actually drop the table,
      * then removes the record from the migrations table.
-     *
-     * @param  string  $migrationName
-     * @return bool
      */
     private function rollbackMigration(string $migrationName): bool
     {
@@ -124,7 +121,7 @@ class MigrationRollbacker
 
                 // Get the migration instance - handle both anonymous and named classes
                 $migration = $this->getMigrationInstance($migrationPath);
-                
+
                 if ($migration === null) {
                     Log::error("Could not instantiate migration for {$migrationName}");
                     // Still delete from migrations table
@@ -132,6 +129,7 @@ class MigrationRollbacker
                         ->table($this->migrationsTable)
                         ->where('migration', $migrationName)
                         ->delete();
+
                     return false;
                 }
 
@@ -147,7 +145,8 @@ class MigrationRollbacker
 
             return true;
         } catch (\Exception $e) {
-            Log::error("Migration rollback failed for {$migrationName}: " . $e->getMessage());
+            Log::error("Migration rollback failed for {$migrationName}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -156,9 +155,6 @@ class MigrationRollbacker
      * Get a migration instance from the migration file.
      *
      * Handles both anonymous classes (Modern Laravel) and named classes.
-     *
-     * @param  string  $migrationPath
-     * @return \Illuminate\Database\Migrations\Migration|null
      */
     private function getMigrationInstance(string $migrationPath): ?\Illuminate\Database\Migrations\Migration
     {
@@ -179,7 +175,7 @@ class MigrationRollbacker
             $migrationClass = end($newClasses);
 
             if (class_exists($migrationClass)) {
-                $instance = new $migrationClass();
+                $instance = new $migrationClass;
                 if ($instance instanceof \Illuminate\Database\Migrations\Migration) {
                     return $instance;
                 }
@@ -187,7 +183,8 @@ class MigrationRollbacker
 
             return null;
         } catch (\Exception $e) {
-            Log::error("Failed to get migration instance: " . $e->getMessage());
+            Log::error('Failed to get migration instance: '.$e->getMessage());
+
             return null;
         }
     }

@@ -42,13 +42,13 @@ class LaravelSmartMigrationsServiceProvider extends PackageServiceProvider
 
         // Publish config file
         $this->publishes([
-            __DIR__ . '/../config/smart-migrations.php' => config_path('smart-migrations.php'),
+            __DIR__.'/../config/smart-migrations.php' => config_path('smart-migrations.php'),
         ], 'laravel-smart-migrations-config');
 
         // Publish migration file with dynamic timestamp
-        $migrationPath = database_path('migrations/' . date('Y_m_d_His') . '_create_smart_migrations_table.php');
+        $migrationPath = database_path('migrations/'.date('Y_m_d_His').'_create_smart_migrations_table.php');
         $this->publishes([
-            __DIR__ . '/../database/migrations/create_smart_migrations_table.php.stub' => $migrationPath,
+            __DIR__.'/../database/migrations/create_smart_migrations_table.php.stub' => $migrationPath,
         ], 'laravel-smart-migrations-migrations');
     }
 

@@ -115,16 +115,16 @@ class MigrationRollbacker
             if ($migrationPath) {
                 // Get classes before requiring the migration file
                 $classesBefore = get_declared_classes();
-                
+
                 // Include the file to define the migration class
                 require_once $migrationPath;
-                
+
                 // Get classes after requiring
                 $classesAfter = get_declared_classes();
-                
+
                 // Find the new class that was loaded (the migration class)
                 $newClasses = array_diff($classesAfter, $classesBefore);
-                
+
                 // Filter to find a class that is a Migration subclass
                 $migrationClass = null;
                 foreach ($newClasses as $cls) {
@@ -133,10 +133,10 @@ class MigrationRollbacker
                         break;
                     }
                 }
-                
+
                 if ($migrationClass && class_exists($migrationClass)) {
-                    $instance = new $migrationClass();
-                    
+                    $instance = new $migrationClass;
+
                     // Verify it's actually a Migration instance
                     if ($instance instanceof \Illuminate\Database\Migrations\Migration) {
                         // Call down() - Schema facade will use the default connection

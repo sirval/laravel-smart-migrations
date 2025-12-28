@@ -92,14 +92,42 @@ class MigrationRollbacker
     /**
      * Execute a migration rollback via Artisan.
      *
+     * Executes the migration's down() method to actually drop the table,
+     * then removes the record from the migrations table.
+     *
      * @param  string  $migrationName
      * @return bool
      */
     private function rollbackMigration(string $migrationName): bool
     {
         try {
-            // Get the migration resolver
             $migrator = app('migrator');
+
+            // Get all migration files
+            $files = $migrator->getMigrationFiles(
+                database_path('migrations')
+            );
+
+            $migrationPath = null;
+
+            // Find the migration file matching the migration name
+            foreach ($files as $file) {
+                if (basename($file, '.php') === $migrationName) {
+                    $migrationPath = $file;
+                    break;
+                }
+            }
+
+            // If migration file exists, instantiate and run its down() method
+            if ($migrationPath) {
+                require_once $migrationPath;
+
+                $class = $this->getMigrationClass($migrationName);
+                $migration = new $class();
+
+                // Call the down() method to actually drop the table
+                $migration->down();
+            }
 
             // Delete from migrations table
             $this->resolver->connection()
@@ -111,6 +139,20 @@ class MigrationRollbacker
         } catch (\Exception) {
             return false;
         }
+    }
+
+    /**
+     * Convert migration filename to class name.
+     *
+     * @param  string  $migrationName
+     * @return string
+     */
+    private function getMigrationClass(string $migrationName): string
+    {
+        return str(str_replace('_', ' ', $migrationName))
+            ->title()
+            ->replace(' ', '')
+            ->toString();
     }
 
     /**

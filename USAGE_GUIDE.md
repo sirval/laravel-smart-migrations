@@ -905,6 +905,59 @@ php artisan migrate:rollback-table users --all --force
 'prevent_multi_batch_rollback' => false,
 ```
 
+### Issue: Table still exists in database after rollback
+
+**Cause:** This is normal behavior. When a migration is rolled back, the migration record is removed from the `migrations` table, but the actual database table is NOT automatically dropped. This happens because Laravel's `down()` method must explicitly drop the table.
+
+**Why This Happens:**
+
+The rollback removes the **migration history record**, not the **database table**. Example:
+
+```
+Before rollback:
+  - Table 'login_approvals' exists in database ✓
+  - Migration '2025_12_28_022743_create_login_approvals_table' in migrations table ✓
+
+After rollback:
+  - Table 'login_approvals' exists in database ✓ (still here!)
+  - Migration record removed from migrations table ✗ (gone)
+
+Result: Orphaned table (exists in DB but no migration record)
+```
+
+**Solution:**
+
+See the complete guide: **[DATABASE_CLEANUP_GUIDE.md](./DATABASE_CLEANUP_GUIDE.md)**
+
+Quick options:
+
+```bash
+# Option 1: Drop the table immediately (if you don't need the data)
+php artisan tinker
+>>> \Schema::dropIfExists('login_approvals');
+
+# Option 2: Create a cleanup migration (recommended)
+php artisan make:migration drop_login_approvals_table
+# Edit the migration to include: Schema::dropIfExists('login_approvals');
+# Then run: php artisan migrate
+
+# Option 3: Drop via raw SQL (database-specific)
+# MySQL: DROP TABLE IF EXISTS login_approvals;
+# PostgreSQL: DROP TABLE IF EXISTS login_approvals CASCADE;
+# SQLite: DROP TABLE IF EXISTS login_approvals;
+```
+
+**Prevention:**
+
+Always ensure your migrations have proper `down()` methods:
+
+```php
+public function down(): void
+{
+    Schema::dropIfExists('login_approvals');  // Don't forget this!
+}
+```
+
 ---
 
 ## Best Practices

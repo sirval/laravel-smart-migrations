@@ -5,7 +5,6 @@ namespace Sirval\LaravelSmartMigrations\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Sirval\LaravelSmartMigrations\Exceptions\ModelNotFoundException;
-use Sirval\LaravelSmartMigrations\Exceptions\NoMigrationsFoundException;
 use Sirval\LaravelSmartMigrations\Services\MigrationFinder;
 use Sirval\LaravelSmartMigrations\Services\MigrationRollbacker;
 use Sirval\LaravelSmartMigrations\Services\ModelResolver;
@@ -17,7 +16,7 @@ class RollbackByModelCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'migrate:rollback-model {model : The model name to rollback}
+    protected $signature = 'migrate:rollback-model {models* : The model name(s) to rollback (comma or space separated)}
                             {--latest : Only rollback the latest migration for this model}
                             {--oldest : Only rollback the oldest migration for this model}
                             {--batch= : Only rollback migrations from a specific batch}
@@ -48,53 +47,84 @@ class RollbackByModelCommand extends Command
     public function handle(): int
     {
         try {
-            $modelName = $this->argument('model');
+            $modelInput = $this->argument('models');
 
-            $this->info("Resolving model: <fg=cyan>{$modelName}</>");
+            // Parse input: could be "User,Post,Comment" or "User Post Comment"
+            $models = $this->parseModelInput($modelInput);
 
-            // Validate and resolve model to table
-            if (! $this->resolver->validateModelExists($this->resolver->buildFullClassName($modelName))) {
-                throw ModelNotFoundException::notFound($modelName);
+            if (empty($models)) {
+                $this->error('No models provided.');
+
+                return self::FAILURE;
             }
 
-            $table = $this->resolver->resolveTableFromModel($modelName);
-            $this->info("Model <fg=cyan>{$modelName}</> resolves to table: <fg=green>{$table}</>");
+            // Collect migrations for all models
+            $allMigrations = collect();
+            $notFoundModels = [];
 
-            // Find migrations for the table
-            $migrations = $this->finder->findByTable($table);
+            foreach ($models as $modelName) {
+                $this->info("Resolving model: <fg=cyan>{$modelName}</>");
 
-            if ($migrations->isEmpty()) {
-                throw NoMigrationsFoundException::forTable($table);
+                try {
+                    // Validate and resolve model to table
+                    if (! $this->resolver->validateModelExists($this->resolver->buildFullClassName($modelName))) {
+                        throw ModelNotFoundException::notFound($modelName);
+                    }
+
+                    $table = $this->resolver->resolveTableFromModel($modelName);
+                    $this->info("Model <fg=cyan>{$modelName}</> resolves to table: <fg=green>{$table}</>");
+
+                    // Find migrations for the table
+                    $migrations = $this->finder->findByTable($table);
+
+                    if ($migrations->isEmpty()) {
+                        $notFoundModels[] = $modelName;
+                    } else {
+                        $this->outputMigrationsSummary($migrations, $modelName);
+                        $allMigrations = $allMigrations->merge($migrations);
+                    }
+                } catch (ModelNotFoundException) {
+                    $notFoundModels[] = $modelName;
+                }
             }
 
-            $this->outputMigrationsSummary($migrations);
+            // Report models with no migrations
+            if (! empty($notFoundModels)) {
+                $this->warn('No migrations found for: '.implode(', ', $notFoundModels));
+            }
+
+            if ($allMigrations->isEmpty()) {
+                $this->error('No migrations found for any of the specified models.');
+
+                return self::FAILURE;
+            }
 
             // Handle options
             if ($this->option('latest')) {
-                $migrations = $this->getLatestMigration($migrations);
+                $allMigrations = $this->getLatestMigrations($allMigrations);
             } elseif ($this->option('oldest')) {
-                $migrations = $this->getOldestMigration($migrations);
+                $allMigrations = $this->getOldestMigrations($allMigrations);
             } elseif ($batch = $this->option('batch')) {
-                $migrations = $migrations->filter(fn ($m) => $m->batch === (int) $batch);
+                $allMigrations = $allMigrations->filter(fn ($m) => $m->batch === (int) $batch);
             } elseif (! $this->option('all')) {
                 // Default: only rollback current batch
-                $migrations = $this->getCurrentBatchMigrations($migrations);
+                $allMigrations = $this->getCurrentBatchMigrations($allMigrations);
             }
 
-            if ($migrations->isEmpty()) {
+            if ($allMigrations->isEmpty()) {
                 $this->warn('No migrations matched the specified criteria.');
 
                 return self::SUCCESS;
             }
 
             // Validate before rollback
-            if (! $this->rollbacker->validateBeforeRollback($migrations, $this->option('all'))) {
+            if (! $this->rollbacker->validateBeforeRollback($allMigrations, $this->option('all'))) {
                 $this->error('Validation failed: Cannot safely rollback these migrations.');
 
                 return self::FAILURE;
             }
 
-            $this->outputRollbackPlan($migrations);
+            $this->outputRollbackPlan($allMigrations);
 
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
@@ -107,20 +137,12 @@ class RollbackByModelCommand extends Command
             $this->line('');
             $this->info('Rolling back migrations...');
 
-            $this->rollbacker->rollbackMultiple($migrations);
+            $this->rollbacker->rollbackMultiple($allMigrations);
 
             $this->line('');
-            $this->info("<fg=green>✓</> Successfully rolled back <fg=cyan>{$migrations->count()}</> migration(s).");
+            $this->info("<fg=green>✓</> Successfully rolled back <fg=cyan>{$allMigrations->count()}</> migration(s).");
 
             return self::SUCCESS;
-        } catch (ModelNotFoundException $e) {
-            $this->error($e->getMessage());
-
-            return self::FAILURE;
-        } catch (NoMigrationsFoundException $e) {
-            $this->error($e->getMessage());
-
-            return self::FAILURE;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
 
@@ -129,40 +151,60 @@ class RollbackByModelCommand extends Command
     }
 
     /**
-     * Get only the latest migration.
+     * Parse model input (comma or space separated).
      */
-    private function getLatestMigration(Collection $migrations): Collection
+    private function parseModelInput(array $input): array
     {
-        return collect([$migrations->last()]);
+        if (empty($input)) {
+            return [];
+        }
+
+        $models = [];
+        foreach ($input as $item) {
+            // Split by comma if needed
+            foreach (explode(',', $item) as $model) {
+                $model = trim($model);
+                if (! empty($model)) {
+                    $models[] = $model;
+                }
+            }
+        }
+
+        return array_unique($models);
     }
 
     /**
-     * Get only the oldest migration.
+     * Get only the latest migration for each model/table.
      */
-    private function getOldestMigration(Collection $migrations): Collection
+    private function getLatestMigrations(Collection $migrations): Collection
     {
-        return collect([$migrations->first()]);
+        // Get latest migration overall (highest batch)
+        return collect([$migrations->sortBy('batch')->last()]);
     }
 
     /**
-     * Get migrations from the current (highest) batch.
+     * Get only the oldest migration for each model/table.
      */
-    private function getCurrentBatchMigrations(Collection $migrations): Collection
+    private function getOldestMigrations(Collection $migrations): Collection
     {
-        $maxBatch = $migrations->max('batch');
-
-        return $migrations->filter(fn ($m) => $m->batch === $maxBatch);
+        // Get oldest migration overall (lowest batch)
+        return collect([$migrations->sortBy('batch')->first()]);
     }
 
     /**
      * Output a summary of found migrations.
      */
-    private function outputMigrationsSummary(Collection $migrations): void
+    private function outputMigrationsSummary(Collection $migrations, string $model = ''): void
     {
         $batches = $this->rollbacker->getExecutedBatches($migrations);
         $batchString = implode(', ', $batches);
 
         $this->line('');
+        $modelLabel = $model ? "Model: <fg=cyan>{$model}</>" : '';
+        if ($modelLabel) {
+            $this->info($modelLabel);
+        }
+
         $this->table(
             ['Batch', 'Migration', 'Status'],
             $migrations->map(fn ($m) => [
@@ -176,6 +218,16 @@ class RollbackByModelCommand extends Command
         if (count($batches) > 1) {
             $this->warn("⚠ Multiple batches detected: {$batchString}. Use --all flag to rollback all.");
         }
+    }
+
+    /**
+     * Get migrations from the current (highest) batch.
+     */
+    private function getCurrentBatchMigrations(Collection $migrations): Collection
+    {
+        $maxBatch = $migrations->max('batch');
+
+        return $migrations->filter(fn ($m) => $m->batch === $maxBatch);
     }
 
     /**

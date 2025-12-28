@@ -59,24 +59,167 @@ php artisan vendor:publish --tag="laravel-smart-migrations-views"
 
 ## Usage
 
-### Rollback by Table
+### Available Commands
+
+#### 1. Rollback by Table Name
+
+Roll back all migrations for a specific table:
 
 ```bash
+# Rollback latest migration only
 php artisan migrate:rollback-table users --latest
+
+# Rollback oldest migration only
+php artisan migrate:rollback-table users --oldest
+
+# Rollback all migrations for this table
+php artisan migrate:rollback-table users --all
+
+# Rollback migrations from specific batch
+php artisan migrate:rollback-table users --batch=5
+
+# Skip confirmation prompt
+php artisan migrate:rollback-table users --force
+
+# Rollback multiple tables at once
+php artisan migrate:rollback-table users,posts,comments --latest
+php artisan migrate:rollback-table users posts comments --latest
 ```
 
-### Rollback by Model
+#### 2. Rollback by Model Name
+
+Roll back all migrations associated with a specific model:
 
 ```bash
+# Rollback latest migration
 php artisan migrate:rollback-model User --latest
+
+# Rollback oldest migration
+php artisan migrate:rollback-model User --oldest
+
+# Rollback all migrations
+php artisan migrate:rollback-model User --all
+
+# Rollback by batch
+php artisan migrate:rollback-model User --batch=5
+
+# Skip confirmation
+php artisan migrate:rollback-model User --force
+
+# Rollback multiple models at once
+php artisan migrate:rollback-model User,Post,Comment --latest
+php artisan migrate:rollback-model User Post Comment --latest
+```
+
+#### 3. Rollback by Batch Number
+
+Roll back all migrations from a specific batch:
+
+```bash
+# Rollback all migrations from batch 5
+php artisan migrate:rollback-batch 5
+
+# Skip confirmation
+php artisan migrate:rollback-batch 5 --force
+```
+
+#### 4. List Migrations for Table
+
+View all migrations affecting a specific table:
+
+```bash
+php artisan migrate:list-table-migrations users
+```
+
+#### 5. List Migrations for Model
+
+View all migrations associated with a specific model:
+
+```bash
+php artisan migrate:list-model-migrations User
+```
+
+### Command Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--latest` | `-L` | Only rollback the latest migration | `false` |
+| `--oldest` | `-O` | Only rollback the oldest migration | `false` |
+| `--all` | `-A` | Rollback all migrations (ignore batch restrictions) | `false` |
+| `--batch=N` | `-B` | Only rollback migrations from batch N | `null` |
+| `--force` | `-F` | Skip confirmation prompts | `false` |
+| `--interactive` | `-I` | Show options and let user choose | `false` |
+
+### Configuration
+
+The package respects these configuration options from `config/smart-migrations.php`:
+
+```php
+return [
+    // Default model namespace for model resolution
+    'model_namespace' => 'App\\Models',
+    
+    // Require user confirmation before rollback
+    'require_confirmation' => true,
+    
+    // Show detailed migration information
+    'show_details' => true,
+    
+    // Prevent rolling back multiple batches at once
+    'prevent_multi_batch_rollback' => true,
+    
+    // Enable audit logging for rollbacks
+    'audit_log_enabled' => false,
+    
+    // Table name for audit logs
+    'audit_log_table' => 'smart_migrations_audits',
+];
 ```
 
 ### Programmatic Usage
 
+Use the SmartMigrations facade for programmatic access:
+
 ```php
 use Sirval\LaravelSmartMigrations\Facades\SmartMigrations;
 
+// Rollback by table
 $results = SmartMigrations::rollbackTable('users', ['latest' => true]);
+
+// Rollback by model
+$results = SmartMigrations::rollbackModel('User', ['latest' => true]);
+
+// Rollback by batch
+$results = SmartMigrations::rollbackBatch(5);
+
+// List migrations for table
+$migrations = SmartMigrations::listMigrationsForTable('users');
+
+// List migrations for model
+$migrations = SmartMigrations::listMigrationsForModel('User');
+
+// Get table status
+$status = SmartMigrations::getTableStatus('users');
+
+// Get model status
+$status = SmartMigrations::getModelStatus('User');
+```
+
+### Available Options for Rollback Methods
+
+When calling rollback methods programmatically, pass options as an array:
+
+```php
+$options = [
+    'latest' => true,      // Rollback latest only
+    'oldest' => false,     // Rollback oldest only
+    'all' => false,        // Rollback all
+    'batch' => null,       // Specific batch number
+    'force' => false,      // Skip confirmation
+    'dry_run' => false,    // Preview without executing
+];
+
+SmartMigrations::rollbackTable('users', $options);
 ```
 
 ## Testing

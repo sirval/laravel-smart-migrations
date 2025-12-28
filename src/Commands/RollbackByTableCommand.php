@@ -49,12 +49,13 @@ class RollbackByTableCommand extends Command
     {
         try {
             $tableInput = $this->argument('tables');
-            
+
             // Parse input: could be "users,posts,comments" or "users posts comments"
             $tables = $this->parseTableInput($tableInput);
-            
+
             if (empty($tables)) {
                 $this->error('No tables provided.');
+
                 return self::FAILURE;
             }
 
@@ -64,7 +65,7 @@ class RollbackByTableCommand extends Command
 
             foreach ($tables as $table) {
                 $this->info("Searching for migrations matching table: <fg=cyan>{$table}</>");
-                
+
                 try {
                     $migrations = $this->finder->findByTable($table);
                     if ($migrations->isEmpty()) {
@@ -80,11 +81,12 @@ class RollbackByTableCommand extends Command
 
             // Report tables with no migrations
             if (! empty($notFoundTables)) {
-                $this->warn("No migrations found for: " . implode(', ', $notFoundTables));
+                $this->warn('No migrations found for: '.implode(', ', $notFoundTables));
             }
 
             if ($allMigrations->isEmpty()) {
                 $this->error('No migrations found for any of the specified tables.');
+
                 return self::FAILURE;
             }
 
@@ -102,12 +104,14 @@ class RollbackByTableCommand extends Command
 
             if ($allMigrations->isEmpty()) {
                 $this->warn('No migrations matched the specified criteria.');
+
                 return self::SUCCESS;
             }
 
             // Validate before rollback
             if (! $this->rollbacker->validateBeforeRollback($allMigrations, $this->option('all'))) {
                 $this->error('Validation failed: Cannot safely rollback these migrations.');
+
                 return self::FAILURE;
             }
 
@@ -116,6 +120,7 @@ class RollbackByTableCommand extends Command
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
                 $this->info('Rollback cancelled.');
+
                 return self::SUCCESS;
             }
 
@@ -131,15 +136,13 @@ class RollbackByTableCommand extends Command
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }
 
     /**
      * Parse table input (comma or space separated).
-     *
-     * @param  array  $input
-     * @return array
      */
     private function parseTableInput(array $input): array
     {
@@ -187,7 +190,6 @@ class RollbackByTableCommand extends Command
 
     /**
      * Get only the latest migration.
-
      */
     private function getLatestMigration(Collection $migrations): Collection
     {
@@ -225,7 +227,7 @@ class RollbackByTableCommand extends Command
         if ($tableLabel) {
             $this->info($tableLabel);
         }
-        
+
         $this->table(
             ['Batch', 'Migration', 'Status'],
             $migrations->map(fn ($m) => [

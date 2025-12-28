@@ -5,7 +5,6 @@ namespace Sirval\LaravelSmartMigrations\Services;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 class MigrationRollbacker
@@ -87,10 +86,8 @@ class MigrationRollbacker
 
         return true;
     }
-    
+
     /**
-     * Execute a migration rollback via Artisan.
-     *
      * Executes the migration's down() method to actually drop the table,
      * then removes the record from the migrations table.
      */

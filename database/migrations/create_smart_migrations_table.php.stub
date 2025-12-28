@@ -1,0 +1,22 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('smart_migrations_audits', function (Blueprint $table) {
+            $table->id();
+            $table->string('migration_name');
+            $table->string('table_name');
+            $table->integer('batch');
+            $table->string('action'); // rollback, execute, etc.
+            $table->string('status'); // success, failed, etc.
+            $table->text('details')->nullable();
+            $table->timestamps();
+        });
+    }
+};

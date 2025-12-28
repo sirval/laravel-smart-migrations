@@ -16,7 +16,7 @@ class RollbackByTableCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'migrate:rollback-table {table : The table name to rollback}
+    protected $signature = 'migrate:rollback-table {tables* : The table name(s) to rollback (comma or space separated)}
                             {--latest : Only rollback the latest migration for this table}
                             {--oldest : Only rollback the oldest migration for this table}
                             {--batch= : Only rollback migrations from a specific batch}
@@ -48,50 +48,74 @@ class RollbackByTableCommand extends Command
     public function handle(): int
     {
         try {
-            $table = $this->argument('table');
-
-            $this->info("Searching for migrations matching table: <fg=cyan>{$table}</>");
-
-            // Find migrations for the table
-            $migrations = $this->finder->findByTable($table);
-
-            if ($migrations->isEmpty()) {
-                throw NoMigrationsFoundException::forTable($table);
+            $tableInput = $this->argument('tables');
+            
+            // Parse input: could be "users,posts,comments" or "users posts comments"
+            $tables = $this->parseTableInput($tableInput);
+            
+            if (empty($tables)) {
+                $this->error('No tables provided.');
+                return self::FAILURE;
             }
 
-            $this->outputMigrationsSummary($migrations);
+            // Collect migrations for all tables
+            $allMigrations = collect();
+            $notFoundTables = [];
+
+            foreach ($tables as $table) {
+                $this->info("Searching for migrations matching table: <fg=cyan>{$table}</>");
+                
+                try {
+                    $migrations = $this->finder->findByTable($table);
+                    if ($migrations->isEmpty()) {
+                        $notFoundTables[] = $table;
+                    } else {
+                        $this->outputMigrationsSummary($migrations, $table);
+                        $allMigrations = $allMigrations->merge($migrations);
+                    }
+                } catch (NoMigrationsFoundException) {
+                    $notFoundTables[] = $table;
+                }
+            }
+
+            // Report tables with no migrations
+            if (! empty($notFoundTables)) {
+                $this->warn("No migrations found for: " . implode(', ', $notFoundTables));
+            }
+
+            if ($allMigrations->isEmpty()) {
+                $this->error('No migrations found for any of the specified tables.');
+                return self::FAILURE;
+            }
 
             // Handle options
             if ($this->option('latest')) {
-                $migrations = $this->getLatestMigration($migrations);
+                $allMigrations = $this->getLatestMigrations($allMigrations);
             } elseif ($this->option('oldest')) {
-                $migrations = $this->getOldestMigration($migrations);
+                $allMigrations = $this->getOldestMigrations($allMigrations);
             } elseif ($batch = $this->option('batch')) {
-                $migrations = $migrations->filter(fn ($m) => $m->batch === (int) $batch);
+                $allMigrations = $allMigrations->filter(fn ($m) => $m->batch === (int) $batch);
             } elseif (! $this->option('all')) {
                 // Default: only rollback current batch
-                $migrations = $this->getCurrentBatchMigrations($migrations);
+                $allMigrations = $this->getCurrentBatchMigrations($allMigrations);
             }
 
-            if ($migrations->isEmpty()) {
+            if ($allMigrations->isEmpty()) {
                 $this->warn('No migrations matched the specified criteria.');
-
                 return self::SUCCESS;
             }
 
             // Validate before rollback
-            if (! $this->rollbacker->validateBeforeRollback($migrations, $this->option('all'))) {
+            if (! $this->rollbacker->validateBeforeRollback($allMigrations, $this->option('all'))) {
                 $this->error('Validation failed: Cannot safely rollback these migrations.');
-
                 return self::FAILURE;
             }
 
-            $this->outputRollbackPlan($migrations);
+            $this->outputRollbackPlan($allMigrations);
 
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
                 $this->info('Rollback cancelled.');
-
                 return self::SUCCESS;
             }
 
@@ -99,25 +123,71 @@ class RollbackByTableCommand extends Command
             $this->line('');
             $this->info('Rolling back migrations...');
 
-            $this->rollbacker->rollbackMultiple($migrations);
+            $this->rollbacker->rollbackMultiple($allMigrations);
 
             $this->line('');
-            $this->info("<fg=green>✓</> Successfully rolled back <fg=cyan>{$migrations->count()}</> migration(s).");
+            $this->info("<fg=green>✓</> Successfully rolled back <fg=cyan>{$allMigrations->count()}</> migration(s).");
 
             return self::SUCCESS;
-        } catch (NoMigrationsFoundException $e) {
-            $this->error($e->getMessage());
-
-            return self::FAILURE;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
-
             return self::FAILURE;
         }
     }
 
     /**
+     * Parse table input (comma or space separated).
+     *
+     * @param  array  $input
+     * @return array
+     */
+    private function parseTableInput(array $input): array
+    {
+        if (empty($input)) {
+            return [];
+        }
+
+        $tables = [];
+        foreach ($input as $item) {
+            // Split by comma if needed
+            foreach (explode(',', $item) as $table) {
+                $table = trim($table);
+                if (! empty($table)) {
+                    $tables[] = $table;
+                }
+            }
+        }
+
+        return array_unique($tables);
+    }
+
+    /**
+     * Get only the latest migration for each table.
+     */
+    private function getLatestMigrations(Collection $migrations): Collection
+    {
+        // Group by table and get latest from each
+        return $migrations->groupBy(function ($m) {
+            return $this->parser->parseTableFromMigrationName($m->migration);
+        })->map(fn ($group) => $group->sortBy('batch')->last())
+            ->values();
+    }
+
+    /**
+     * Get only the oldest migration for each table.
+     */
+    private function getOldestMigrations(Collection $migrations): Collection
+    {
+        // Group by table and get oldest from each
+        return $migrations->groupBy(function ($m) {
+            return $this->parser->parseTableFromMigrationName($m->migration);
+        })->map(fn ($group) => $group->sortBy('batch')->first())
+            ->values();
+    }
+
+    /**
      * Get only the latest migration.
+
      */
     private function getLatestMigration(Collection $migrations): Collection
     {
@@ -145,12 +215,17 @@ class RollbackByTableCommand extends Command
     /**
      * Output a summary of found migrations.
      */
-    private function outputMigrationsSummary(Collection $migrations): void
+    private function outputMigrationsSummary(Collection $migrations, string $table = ''): void
     {
         $batches = $this->rollbacker->getExecutedBatches($migrations);
         $batchString = implode(', ', $batches);
 
         $this->line('');
+        $tableLabel = $table ? "Table: <fg=cyan>{$table}</>" : '';
+        if ($tableLabel) {
+            $this->info($tableLabel);
+        }
+        
         $this->table(
             ['Batch', 'Migration', 'Status'],
             $migrations->map(fn ($m) => [

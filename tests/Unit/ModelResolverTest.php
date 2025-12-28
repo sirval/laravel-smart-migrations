@@ -1,15 +1,14 @@
 <?php
 
-use Sirval\LaravelSmartMigrations\Exceptions\ModelNotFoundException;
 use Sirval\LaravelSmartMigrations\Services\ModelResolver;
 
 describe('ModelResolver', function () {
     it('resolves model to table name', function () {
         $resolver = new ModelResolver('Sirval\\LaravelSmartMigrations\\Tests');
-        
+
         // This would require creating test models - for now we test the logic
         $fullClass = $resolver->buildFullClassName('User');
-        
+
         expect($fullClass)->toBe('Sirval\\LaravelSmartMigrations\\Tests\\User');
     });
 
@@ -27,7 +26,7 @@ describe('ModelResolver', function () {
     });
 
     it('validates model exists', function () {
-        $resolver = new ModelResolver();
+        $resolver = new ModelResolver;
 
         // Test with built-in class that extends Model
         expect($resolver->validateModelExists('App\\Models\\User'))->toBeFalse(); // App\Models\User doesn't exist in test

@@ -14,14 +14,13 @@ class ModelResolver
      */
     public function __construct(
         private string $defaultNamespace = 'App\\Models'
-    ) {
-    }
+    ) {}
 
     /**
      * Resolve a model name or class to its database table name.
      *
      * @param  string  $model  Model class name or full namespace
-     * @return string  The database table name
+     * @return string The database table name
      *
      * @throws ModelNotFoundException
      */
@@ -43,7 +42,6 @@ class ModelResolver
      * Validate that a model class exists and is a valid Eloquent model.
      *
      * @param  string  $className  Full class namespace
-     * @return bool
      */
     public function validateModelExists(string $className): bool
     {
@@ -70,7 +68,7 @@ class ModelResolver
      * Otherwise, prepend the default namespace.
      *
      * @param  string  $model  Model name or namespace
-     * @return string  Full class namespace
+     * @return string Full class namespace
      */
     public function buildFullClassName(string $model): string
     {
@@ -80,13 +78,11 @@ class ModelResolver
         }
 
         // Otherwise, prepend the default namespace
-        return $this->defaultNamespace . '\\' . $model;
+        return $this->defaultNamespace.'\\'.$model;
     }
 
     /**
      * Get the configured model namespace.
-     *
-     * @return string
      */
     public function getNamespace(): string
     {
@@ -96,7 +92,6 @@ class ModelResolver
     /**
      * Set a custom model namespace.
      *
-     * @param  string  $namespace
      * @return $this
      */
     public function setNamespace(string $namespace): self

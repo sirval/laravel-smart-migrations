@@ -34,15 +34,14 @@ class SmartMigrations
     /**
      * Rollback migrations for a specific table.
      *
-     * @param string $table The database table name
-     * @param array $options Rollback options
-     *   - latest (bool): Rollback only the latest migration
-     *   - oldest (bool): Rollback only the oldest migration
-     *   - all (bool): Rollback all migrations for this table
-     *   - batch (int): Rollback all migrations from specific batch
-     *   - force (bool): Skip confirmation prompts
-     *   - dry_run (bool): Show what would be rolled back without executing
-     *
+     * @param  string  $table  The database table name
+     * @param  array  $options  Rollback options
+     *                          - latest (bool): Rollback only the latest migration
+     *                          - oldest (bool): Rollback only the oldest migration
+     *                          - all (bool): Rollback all migrations for this table
+     *                          - batch (int): Rollback all migrations from specific batch
+     *                          - force (bool): Skip confirmation prompts
+     *                          - dry_run (bool): Show what would be rolled back without executing
      * @return Collection Results of rollback operations
      *
      * @throws NoMigrationsFoundException
@@ -63,9 +62,8 @@ class SmartMigrations
     /**
      * Rollback migrations for a specific model.
      *
-     * @param string $model The model class name or fully qualified class name
-     * @param array $options Rollback options (see rollbackTable)
-     *
+     * @param  string  $model  The model class name or fully qualified class name
+     * @param  array  $options  Rollback options (see rollbackTable)
      * @return Collection Results of rollback operations
      *
      * @throws ModelNotFoundException
@@ -73,7 +71,7 @@ class SmartMigrations
      */
     public function rollbackModel(string $model, array $options = []): Collection
     {
-        if (!$this->modelResolver->validateModelExists($model)) {
+        if (! $this->modelResolver->validateModelExists($model)) {
             throw new ModelNotFoundException(
                 "Model '{$model}' not found."
             );
@@ -87,11 +85,10 @@ class SmartMigrations
     /**
      * Rollback all migrations from a specific batch.
      *
-     * @param int $batch The batch number
-     * @param array $options Rollback options
-     *   - force (bool): Skip confirmation prompts
-     *   - dry_run (bool): Show what would be rolled back without executing
-     *
+     * @param  int  $batch  The batch number
+     * @param  array  $options  Rollback options
+     *                          - force (bool): Skip confirmation prompts
+     *                          - dry_run (bool): Show what would be rolled back without executing
      * @return Collection Results of rollback operations
      *
      * @throws NoMigrationsFoundException
@@ -112,8 +109,7 @@ class SmartMigrations
     /**
      * List all migrations for a specific table.
      *
-     * @param string $table The database table name
-     *
+     * @param  string  $table  The database table name
      * @return Collection Migration records
      *
      * @throws NoMigrationsFoundException
@@ -134,8 +130,7 @@ class SmartMigrations
     /**
      * List all migrations for a specific model.
      *
-     * @param string $model The model class name or fully qualified class name
-     *
+     * @param  string  $model  The model class name or fully qualified class name
      * @return Collection Migration records
      *
      * @throws ModelNotFoundException
@@ -143,7 +138,7 @@ class SmartMigrations
      */
     public function listMigrationsForModel(string $model): Collection
     {
-        if (!$this->modelResolver->validateModelExists($model)) {
+        if (! $this->modelResolver->validateModelExists($model)) {
             throw new ModelNotFoundException(
                 "Model '{$model}' not found."
             );
@@ -157,8 +152,7 @@ class SmartMigrations
     /**
      * Get migration status for a specific table.
      *
-     * @param string $table The database table name
-     *
+     * @param  string  $table  The database table name
      * @return array Status information
      */
     public function getTableStatus(string $table): array
@@ -177,15 +171,14 @@ class SmartMigrations
     /**
      * Get migration status for a specific model.
      *
-     * @param string $model The model class name
-     *
+     * @param  string  $model  The model class name
      * @return array Status information
      *
      * @throws ModelNotFoundException
      */
     public function getModelStatus(string $model): array
     {
-        if (!$this->modelResolver->validateModelExists($model)) {
+        if (! $this->modelResolver->validateModelExists($model)) {
             throw new ModelNotFoundException(
                 "Model '{$model}' not found."
             );
@@ -199,8 +192,6 @@ class SmartMigrations
     /**
      * Execute the rollback with the specified options.
      *
-     * @param Collection $migrations
-     * @param array $options
      *
      * @return Collection Results
      */
@@ -225,16 +216,11 @@ class SmartMigrations
 
     /**
      * Filter migrations based on provided options.
-     *
-     * @param Collection $migrations
-     * @param array $options
-     *
-     * @return Collection
      */
     private function filterMigrations(Collection $migrations, array $options): Collection
     {
         // Default: rollback latest
-        if (empty($options) || !isset($options['latest']) && !isset($options['oldest']) && !isset($options['all'])) {
+        if (empty($options) || ! isset($options['latest']) && ! isset($options['oldest']) && ! isset($options['all'])) {
             return $migrations->sortByDesc('batch')->take(1);
         }
 

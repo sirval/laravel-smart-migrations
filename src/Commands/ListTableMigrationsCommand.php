@@ -56,9 +56,11 @@ class ListTableMigrationsCommand extends Command
             return self::SUCCESS;
         } catch (NoMigrationsFoundException $e) {
             $this->error($e->getMessage());
+
             return self::FAILURE;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

@@ -13,14 +13,13 @@ class MigrationRollbacker
     public function __construct(
         private ConnectionResolverInterface $resolver,
         private string $migrationsTable = 'migrations'
-    ) {
-    }
+    ) {}
 
     /**
      * Rollback a single migration.
      *
      * @param  object  $migration  The migration record
-     * @return bool  Success status
+     * @return bool Success status
      *
      * @throws \Exception
      */
@@ -33,7 +32,7 @@ class MigrationRollbacker
      * Rollback multiple migrations.
      *
      * @param  Collection<int, object>  $migrations  Migrations to rollback
-     * @return Collection  Results with success/failure status
+     * @return Collection Results with success/failure status
      */
     public function rollbackMultiple(Collection $migrations): Collection
     {
@@ -47,7 +46,7 @@ class MigrationRollbacker
      * Rollback all migrations in a collection.
      *
      * @param  Collection<int, object>  $migrations
-     * @return Collection  Results
+     * @return Collection Results
      */
     public function rollbackAll(Collection $migrations): Collection
     {
@@ -58,7 +57,7 @@ class MigrationRollbacker
      * Get the unique batches from a collection of migrations.
      *
      * @param  Collection<int, object>  $migrations
-     * @return array  Array of batch numbers
+     * @return array Array of batch numbers
      */
     public function getExecutedBatches(Collection $migrations): array
     {
@@ -73,8 +72,6 @@ class MigrationRollbacker
      * - Broken migration dependencies
      *
      * @param  Collection<int, object>  $migrations
-     * @param  bool  $allowMultipleBatches
-     * @return bool
      */
     public function validateBeforeRollback(Collection $migrations, bool $allowMultipleBatches = false): bool
     {
@@ -96,9 +93,6 @@ class MigrationRollbacker
      *
      * Executes the migration's down() method to actually drop the table,
      * then removes the record from the migrations table.
-     *
-     * @param  string  $migrationName
-     * @return bool
      */
     private function rollbackMigration(string $migrationName): bool
     {
@@ -127,7 +121,7 @@ class MigrationRollbacker
 
                 // Get the migration instance - handle both anonymous and named classes
                 $migration = $this->getMigrationInstance($migrationPath);
-                
+
                 if ($migration === null) {
                     Log::error("Could not instantiate migration for {$migrationName}");
                     // Still delete from migrations table
@@ -135,6 +129,7 @@ class MigrationRollbacker
                         ->table($this->migrationsTable)
                         ->where('migration', $migrationName)
                         ->delete();
+
                     return false;
                 }
 
@@ -150,7 +145,8 @@ class MigrationRollbacker
 
             return true;
         } catch (\Exception $e) {
-            Log::error("Migration rollback failed for {$migrationName}: " . $e->getMessage());
+            Log::error("Migration rollback failed for {$migrationName}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -159,9 +155,6 @@ class MigrationRollbacker
      * Get a migration instance from the migration file.
      *
      * Handles both anonymous classes (Modern Laravel) and named classes.
-     *
-     * @param  string  $migrationPath
-     * @return \Illuminate\Database\Migrations\Migration|null
      */
     private function getMigrationInstance(string $migrationPath): ?\Illuminate\Database\Migrations\Migration
     {
@@ -182,7 +175,7 @@ class MigrationRollbacker
             $migrationClass = end($newClasses);
 
             if (class_exists($migrationClass)) {
-                $instance = new $migrationClass();
+                $instance = new $migrationClass;
                 if ($instance instanceof \Illuminate\Database\Migrations\Migration) {
                     return $instance;
                 }
@@ -190,20 +183,14 @@ class MigrationRollbacker
 
             return null;
         } catch (\Exception $e) {
-            Log::error("Failed to get migration instance: " . $e->getMessage());
+            Log::error('Failed to get migration instance: '.$e->getMessage());
+
             return null;
         }
     }
 
     /**
      * Log a rollback to the audit table (if enabled).
-     *
-     * @param  string  $migrationName
-     * @param  string  $table
-     * @param  int  $batch
-     * @param  string  $status
-     * @param  string|null  $details
-     * @return void
      */
     public function logToAudit(
         string $migrationName,

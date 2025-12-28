@@ -1,8 +1,5 @@
 <?php
 
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Sirval\LaravelSmartMigrations\Services\MigrationRollbacker;
 
 // Note: Database tests are skipped in unit test suite due to SQLite driver requirement
@@ -11,13 +8,13 @@ use Sirval\LaravelSmartMigrations\Services\MigrationRollbacker;
 describe('MigrationRollbacker', function () {
     it('can be instantiated', function () {
         $rollbacker = app(MigrationRollbacker::class);
-        
+
         expect($rollbacker)->toBeInstanceOf(MigrationRollbacker::class);
     });
 
     it('can call required methods', function () {
         $rollbacker = app(MigrationRollbacker::class);
-        
+
         // Verify methods exist and are callable
         expect(method_exists($rollbacker, 'rollbackSingle'))->toBeTrue();
         expect(method_exists($rollbacker, 'rollbackMultiple'))->toBeTrue();

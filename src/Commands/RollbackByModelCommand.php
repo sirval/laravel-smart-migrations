@@ -75,7 +75,7 @@ class RollbackByModelCommand extends Command
             } elseif ($this->option('oldest')) {
                 $migrations = $this->getOldestMigration($migrations);
             } elseif ($batch = $this->option('batch')) {
-                $migrations = $migrations->filter(fn ($m) => $m->batch === (int)$batch);
+                $migrations = $migrations->filter(fn ($m) => $m->batch === (int) $batch);
             } elseif (! $this->option('all')) {
                 // Default: only rollback current batch
                 $migrations = $this->getCurrentBatchMigrations($migrations);
@@ -83,12 +83,14 @@ class RollbackByModelCommand extends Command
 
             if ($migrations->isEmpty()) {
                 $this->warn('No migrations matched the specified criteria.');
+
                 return self::SUCCESS;
             }
 
             // Validate before rollback
             if (! $this->rollbacker->validateBeforeRollback($migrations, $this->option('all'))) {
                 $this->error('Validation failed: Cannot safely rollback these migrations.');
+
                 return self::FAILURE;
             }
 
@@ -97,6 +99,7 @@ class RollbackByModelCommand extends Command
             // Ask for confirmation unless forced
             if (! $this->option('force') && ! $this->confirm('Do you want to rollback these migrations?', false)) {
                 $this->info('Rollback cancelled.');
+
                 return self::SUCCESS;
             }
 
@@ -112,12 +115,15 @@ class RollbackByModelCommand extends Command
             return self::SUCCESS;
         } catch (ModelNotFoundException $e) {
             $this->error($e->getMessage());
+
             return self::FAILURE;
         } catch (NoMigrationsFoundException $e) {
             $this->error($e->getMessage());
+
             return self::FAILURE;
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }
